@@ -104,9 +104,42 @@ const emptyWishlist = (req,res) => {
     
 }
 
-const addPaymentMethod = (req,res) => {
-    
-}
+const addPaymentMethod = async (req,res) => {
+    try {
+        const { id } = req.params
+        const inputData = req.body
+        if(!id || Object.keys(inputData).length === 0) {
+            return res.status(402).json({message:'Provide Details'})
+        }
+        const validPaymentModes = ["UPI", "Credit_Card", "Debit_Card", "NETBANKING", "CASH", "COUPONS"]
+        if(!validPaymentModes.includes(inputData.mode_of_payment)) {
+            return res.status(402).json({message:'Invalid Mode of Payment'})
+        }
+        if(["Credit_Card", "Debit_Card"].includes(inputData.mode_of_payment)) {
+            if(!inputData.card_details) {
+                return res.status(402).json({message:'Please Provide Card Details'})
+            }
+            const user = await User.findById(id)
+            if(!user) {
+                return res.status(402).json({message:'User does not exists'})
+            }
+            const matchCard = user.payment.find(payment => payment.card_details.Card_number === inputData.card_details.Card_number)
+            if(matchCard) {
+                return res.status(402).json({message:'Card Already exists'})
+            }
+            const findUserAndAddPayment = await User.findByIdAndUpdate(req.params.id, {
+                $push: {payment:inputData}
+            })
+            findUserAndAddPayment['payment'].push(inputData)
+            console.log('findUserAndAddPayment',findUserAndAddPayment)
+            return res.status(200).json({message:'Payment Added', data:findUserAndAddPayment})
+        }
+
+        
+    } catch(err) {
+        console.log(err)
+        return res.status(402).json({message:'Internal Server Error'})
+    }}
 
 const removePaymentMethod = (req,res) => {
     

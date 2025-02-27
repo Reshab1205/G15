@@ -13,13 +13,13 @@ const addressSchema = new mongoose.Schema({
 }, {timestamps:true})
 
 const paymentSchema = new mongoose.Schema({
-    mode_of_payment:{type: String, enum:["UPI", "CREDIT_CARD", "DEBIT_CARD", "NETBANKING", "CASH", "COUPONS"]},
-    card_details:[{
-        CARD_NUMBER:{type:Number},
+    mode_of_payment:{type: String, enum:["UPI", "Credit_Card", "Debit_Card", "NETBANKING", "CASH", "COUPONS"]},
+    card_details:{
+        Card_number:{type:Number},
         CVV:{type:Number},
-        EXPIRY:{type:String},
-        CARD_HOLDER_NAME: {type:String}
-    }]
+        Expiry:{type:String},
+        Name_on_card: {type:String}
+    }
 
 }, {timestamps:true})
 
@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
     address: [addressSchema],
     profile_image:{type:String},
     user_type:{type:String, enum:["Normal", "Gold", "Premium"]},
-    paymentMethods: [paymentSchema],
+    payment: [paymentSchema],
     user_active_status: {type:String, enum:["Active", "InActive", "Blocked"]},
 
 }, {timestamps:true})
