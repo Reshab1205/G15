@@ -1,5 +1,7 @@
 const express = require('express')
 const User = require('../models/userSchema')
+const Order = require('../models/orderSchema')
+const { default: mongoose } = require('mongoose')
 
 const register = async (req,res) => {
     try {
@@ -47,6 +49,112 @@ const login = async (req,res) => {
         // }
     } catch(err) {
         return res.status(402).json({message:'Internal Server Error'})
+    }
+}
+
+const getAllActiveUser = async (req,res) => {
+    try {
+        const users = await User.aggregate([
+            {
+                $match: { user_active_status: "Active"}
+            },
+            {
+                $project: {
+                    first_name:1,
+                    last_name:1,
+                    email:1,
+                    mobile_number:1,
+                    // address:1,
+                    _id:0
+                }
+            }
+        ])
+        return res.status(200).json({message: "Active Users", data:users})
+
+    } catch (err) {
+        return res.status(402).json({message:'Internal Server Error'})   
+    }
+}
+
+const groupUsersByType = async (req,res) => {
+    try {
+        const groupedData = await User.aggregate([
+            {
+                $group: {
+                    _id:"$user_type",
+                    count: {$sum: 1}
+                }
+            },
+            {
+                $sort: { count: -1}
+            }
+        ])
+        return res.status(200).json({message: "Type of Users", data:groupedData})
+    } catch (err) {
+        return res.status(402).json({message:'Internal Server Error'})   
+    }
+}
+
+const getUsersByCity = async (req,res) => {
+    try {
+        const { city } = req.params;
+
+        const users = await User.aggregate([
+            { $unwind : "$address" },
+            { $match : { "address.city": city }},
+            {
+                $project: {
+                    first_name: 1,
+                    last_name: 1,
+                    email: 1,
+                    mobile_number: 1,
+                    "address.city": 1
+                }
+            },
+        ])
+        return res.status(200).json({message: "City of Users", data:users}) 
+    } catch (err) {
+        return res.status(402).json({message:'Internal Server Error'})   
+    }
+}
+
+const getAllOrdersDetailsOfUser = async (req,res) => {
+    try {
+        const { userId} = req.params;
+        const orders = await Order.aggregate([
+            {$match: {user_id: new mongoose.Types.ObjectId.isValid(userId)}},
+            { 
+                $lookup: {
+                    from: "products",
+                    localField:"product_id",
+                    foreignField:"_id",
+                    as: "product_details"
+                }
+            },
+            {
+                $lookup: {
+                    from: "seller",
+                    localField: "seller_id",
+                    foreignField: "_id",
+                    as: "seller_details"
+                }
+            },
+            { $unwind: "$product_details"},
+            { $unwind: "$seller_details"},
+            {
+                $project: {
+                    order_status:1,
+                    order_amount:1,
+                    "product_details.product_name":1,
+                    "seller_details.name":1,
+                    createdAt:1
+                }
+            }
+        ])
+        return res.status(200).json({message: "Order Detail of User", data:orders}) 
+
+    } catch (err) {
+        return res.status(402).json({message:'Internal Server Error'})    
     }
 }
 
@@ -186,14 +294,87 @@ const addReviewonOrderedProduct = (req,res) => {
     
 }
 
+const getActiveUsers = async (req,res) => {
+    try{
+        const activeUsers = await  User.aggregate([
+            {
+                $match: {user_active_status: "Active"}
+            },
+            {
+                $project: {
+                    email:1,
+                    mobile_number:1,
+                    first_name:1,
+                    _id:0
+                }
+            }
+        ])
+        console.log(activeUsers)
+        return res.status(202).json({message: "Active Users", data:activeUsers})
+
+    } catch (err) {
+        return res.status(402).json({message:'Internal Server Error'})
+    }
+
+}
+
+const getInActiveUsers = async (req,res) => {
+    try{
+        const InActiveUsers = await  User.aggregate([
+            {
+                $match: {user_active_status: "InActive"}
+            },
+            {
+                $project: {
+                    email:1,
+                    mobile_number:1,
+                    first_name:1,
+                    _id:0
+                }
+            }
+        ])
+        console.log(InActiveUsers)
+        return res.status(202).json({message: "InActive Users", data:InActiveUsers})
+
+    } catch (err) {
+        return res.status(402).json({message:'Internal Server Error'})
+    }
+}
+
+const getBlockedUsers = async (req,res) => {
+    
+}
+
+const getUserByGroup = async (req,res) => {
+    try {
+        const groupedData = await User.aggregate([
+            {
+                $group: {
+                    _id:"$user_type",
+                    count: {$sum:1}
+                }
+            },
+            {
+                $sort: { count: -1}
+            }
+        ])
+        return res.status(202).json({message: "Group of Users", data:groupedData})
+
+    } catch (err) {
+        return res.status(402).json({message:'Internal Server Error'})
+    }
+
+}
+
+
 
 
 const getProfile = (req,res) => {
     
 }
 
-module.exports = {register,login,updateUser,deleteUser,
-    addDeliveryAddress,addToCart,addToWishlist,addPaymentMethod,
+module.exports = {register,login,getActiveUsers,getUserByGroup,getInActiveUsers,getBlockedUsers,updateUser,deleteUser,getAllActiveUser,groupUsersByType,
+    getUsersByCity, addDeliveryAddress,addToCart,addToWishlist,addPaymentMethod,
     addRatingsonOrderedProduct,addReviewonOrderedProduct,getProfile,
     removeDeliveryAddress,deleteFromCart,emptyCart,removeFromWishlist,
     emptyWishlist,removePaymentMethod}

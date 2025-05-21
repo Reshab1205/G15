@@ -9,7 +9,7 @@ const productReviewSchema = new mongoose.Schema({
 
 
 
-const userSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema({
     product_id: {type:String, required:true, unique:true},
     product_name: {type:String, required:true},
     seller_id: {type:mongoose.Schema.Types.ObjectId, ref:"sellers", required:true},
@@ -32,4 +32,4 @@ const userSchema = new mongoose.Schema({
 
 }, {timestamps:true})
 
-module.exports = mongoose.model('user', userSchema)
+module.exports = mongoose.model('Product', productSchema)

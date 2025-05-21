@@ -31,9 +31,9 @@ const userSchema = new mongoose.Schema({
     mobile_number: {type:Number,unique:true, required:true},
     address: [addressSchema],
     profile_image:{type:String},
-    user_type:{type:String, enum:["Normal", "Gold", "Premium"]},
+    user_type:{type:String, default: "Normal", enum:["Normal", "Gold", "Premium"]},
     payment: [paymentSchema],
-    user_active_status: {type:String, enum:["Active", "InActive", "Blocked"]},
+    user_active_status: {type:String, default: "Active", enum:["Active", "InActive", "Blocked"]},
 
 }, {timestamps:true})
 
